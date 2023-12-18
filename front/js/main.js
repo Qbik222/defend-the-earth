@@ -8,8 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let score = 0;
 
 
-    console.log(containerRect);
-
     function updateShipPosition(angle) {
         let shipX = containerRect.left + containerRect.width / 2 + earthRadius * Math.cos(angle);
         let shipY = containerRect.top + containerRect.height / 2 + earthRadius * Math.sin(angle);
@@ -18,16 +16,21 @@ document.addEventListener('DOMContentLoaded', () => {
         ship.style.top = shipY - ship.clientHeight / 2 + 'px';
         ship.style.transform = `rotate(${angle}rad)`;
     }
-    function checkCollision(bullet, movingElement) {
-        const bulletRect = bullet.getBoundingClientRect();
-        const movingElementRect = movingElement.getBoundingClientRect();
-        console.log("gameover")
+    function checkCollision(elem1, elem2) {
+        const elem1Rect = elem1.getBoundingClientRect();
+        const elem2Rect = elem2.getBoundingClientRect();
+        // console.log(elem1)
+        // console.log(elem2)
+        //
+        // console.log(elem1Rect)
+        // console.log(elem2Rect)
+
 
         return (
-            bulletRect.left < movingElementRect.right &&
-            bulletRect.right > movingElementRect.left &&
-            bulletRect.top < movingElementRect.bottom &&
-            bulletRect.bottom > movingElementRect.top
+            elem1Rect.left < elem2Rect.right &&
+            elem1Rect.right > elem2Rect.left &&
+            elem1Rect.top < elem2Rect.bottom &&
+            elem1Rect.bottom > elem2Rect.top
 
         );
     }
@@ -109,18 +112,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     removeScore()
                     score++
                     setScore(score)
-                    return;  // Виходимо з циклу, бо вже видалили елемент
+                    return;
                 }
             }
             const movingElementsVertical = document.querySelectorAll('.moving-element-vertical');
             for (const movingElement of movingElementsVertical) {
                 if (checkCollision(bullet, movingElement)) {
                     space.removeChild(bullet);
-                    document.body.removeChild(movingElement);
+                    space.removeChild(movingElement);
                     removeScore()
                     score++
                     setScore(score)
-                    return;  // Виходимо з циклу, бо вже видалили елемент
+                    return;
                 }
             }
 
@@ -140,14 +143,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-    function spawnMovingElement() {
+    function moveEnemies(movingElementHorizontal, movingElementVertical){
+
+        movingElementHorizontal.style.animation = 'moveToCenter 5s linear';
+        movingElementVertical.style.animation = 'moveToCenter 5s linear';
+
+
+
+        function animateHorizontal() {
+            if (checkCollision(movingElementHorizontal, earth)) {
+                space.removeChild(movingElementHorizontal);
+            }
+            else {
+                requestAnimationFrame(animateHorizontal);
+            }
+        }
+        function animateVertical() {
+            if (checkCollision(movingElementVertical, earth)) {
+                space.removeChild(movingElementVertical);
+            }
+            else {
+                requestAnimationFrame(animateVertical);
+            }
+        }
+
+        animateHorizontal();
+        animateVertical();
+
+
+    }
+
+    function spawnEnemies() {
         const movingElementHorizontal = document.createElement('div');
         const movingElementVertical = document.createElement('div');
 
         movingElementHorizontal.className = 'moving-element-horizontal';
         movingElementVertical.className = 'moving-element-vertical';
-        document.body.appendChild(movingElementHorizontal);
-        document.body.appendChild(movingElementVertical);
+        space.appendChild(movingElementHorizontal);
+        space.appendChild(movingElementVertical);
 
         const horizontalStartX = Math.random() < 0.5 ? -50 : window.innerWidth + 50; // Поза лівим або правим краєм екрану
         const horizontalStartY = Math.random() * window.innerHeight;
@@ -158,30 +191,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         movingElementHorizontal.style.left = horizontalStartX + 'px';
         movingElementHorizontal.style.top = horizontalStartY + 'px';
-        movingElementHorizontal.style.animation = 'moveToCenter 5s linear';
+        // movingElementHorizontal.style.animation = 'moveToCenter 5s linear';
 
         movingElementVertical.style.left = verticalStartX + 'px';
         movingElementVertical.style.top = verticalStartY + 'px';
-        movingElementVertical.style.animation = 'moveToCenter 5s linear';
+        // movingElementVertical.style.animation = 'moveToCenter 5s linear';
 
-        if(checkCollision(movingElementHorizontal, earth)){
-            document.body.removeChild(movingElementHorizontal);
-        }
+            moveEnemies(movingElementHorizontal, movingElementVertical)
 
-        movingElementHorizontal.addEventListener('animationend', () => {
 
-            document.body.removeChild(movingElementHorizontal);
-        });
-        movingElementVertical.addEventListener('animationend', () => {
-            document.body.removeChild(movingElementVertical);
-        });
+
     }
 
-    function spawnElementsWithInterval() {
-        setInterval(spawnMovingElement, (Math.random() * 2000) + 1000);
-    }
 
-    spawnElementsWithInterval();
+    setInterval(spawnEnemies, (Math.random() * 2000) + 1000);
 
 
 
